@@ -1,0 +1,171 @@
+name: Pipeline
+
+on:
+  - push
+  - delete
+
+env:
+  SAM_TEMPLATE: {{cookiecutter.sam_template}}
+
+  DEVELOPMENT_STACK_NAME: {{cookiecutter.development_stack_name}}
+  DEVELOPMENT_PIPELINE_EXECUTION_ROLE: {{cookiecutter.development_pipeline_execution_role}}
+  DEVELOPMENT_CLOUDFORMATION_EXECUTION_ROLE: {{cookiecutter.development_cloudformation_execution_role}}
+  DEVELOPMENT_ARTIFACTS_BUCKET: {{cookiecutter.development_artifacts_bucket}}
+  DEVELOPMENT_REGION: {{cookiecutter.development_region}}
+
+  STAGING_STACK_NAME: {{cookiecutter.staging_stack_name}}
+  STAGING_PIPELINE_EXECUTION_ROLE: {{cookiecutter.staging_pipeline_execution_role}}
+  STAGING_CLOUDFORMATION_EXECUTION_ROLE: {{cookiecutter.staging_cloudformation_execution_role}}
+  STAGING_ARTIFACTS_BUCKET: {{cookiecutter.staging_artifacts_bucket}}
+  STAGING_REGION: {{cookiecutter.staging_region}}
+
+  PRODUCTION_STACK_NAME: {{cookiecutter.production_stack_name}}
+  PRODUCTION_PIPELINE_EXECUTION_ROLE: {{cookiecutter.production_pipeline_execution_role}}
+  PRODUCTION_CLOUDFORMATION_EXECUTION_ROLE: {{cookiecutter.production_cloudformation_execution_role}}
+  PRODUCTION_ARTIFACTS_BUCKET: {{cookiecutter.production_artifacts_bucket}}
+  PRODUCTION_REGION: {{cookiecutter.production_region}}
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-test-deploy-development:
+    # this stage is triggered only for feature branches (feature*),
+    # which will build the stack and deploy to a stack named with branch name.
+    if: contains(github.ref, 'feature') && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Assume the development pipeline user role
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: {{ '${{ env.DEVELOPMENT_REGION }}' }}
+          role-to-assume: {{ '${{ env.DEVELOPMENT_PIPELINE_EXECUTION_ROLE }}' }}
+          role-session-name: development-deployment
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: Build development branch
+        shell: bash
+        run: sam build --template ${SAM_TEMPLATE} #--use-container
+
+      - name: Test development branch
+        shell: bash
+        run: npm install && npm run test
+
+      - name: Deploy development branch to development account
+        shell: bash
+        run: |
+          sam deploy --stack-name $(echo ${GITHUB_REF##*/} | tr -cd '[a-zA-Z0-9-]') \
+            --capabilities CAPABILITY_IAM \
+            --region ${DEVELOPMENT_REGION} \
+            --s3-bucket ${DEVELOPMENT_ARTIFACTS_BUCKET} \
+            --no-fail-on-empty-changeset \
+            --role-arn ${DEVELOPMENT_CLOUDFORMATION_EXECUTION_ROLE}
+
+  delete-development:
+    # this stage is triggered only for feature branches (feature*),
+    # which will delete the stack named with branch name.
+    if: contains(github.event.ref, 'feature') && github.event_name == 'delete'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Assume the development pipeline user role
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: {{ '${{ env.DEVELOPMENT_REGION }}' }}
+          role-to-assume: {{ '${{ env.DEVELOPMENT_PIPELINE_EXECUTION_ROLE }}' }}
+          role-session-name: development-deletion
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: Delete development branch stack
+        env:
+          DEVELOPMENT_BRANCH_NAME: {{ '${{ github.event.ref }}' }}
+        run: |
+          sam delete \
+            --stack-name $(echo ${DEVELOPMENT_BRANCH_NAME##*/} | tr -cd '[a-zA-Z0-9-]') \
+            --region ${DEVELOPMENT_REGION} \
+            --no-prompts
+
+  build-test-deploy-staging:
+    if: github.ref == 'refs/heads/{{ cookiecutter.staging_git_branch }}' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Assume the staging pipeline user role
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: {{ '${{ env.STAGING_REGION }}' }}
+          role-to-assume: {{ '${{ env.STAGING_PIPELINE_EXECUTION_ROLE }}' }}
+          role-session-name: staging-deployment
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: Build develop branch
+        shell: bash
+        run: sam build --template ${SAM_TEMPLATE} #--use-container
+      
+      - name: Test develop branch
+        shell: bash
+        run: npm install && npm run test
+
+      - name: Deploy develop branch to staging account
+        run: |
+          sam deploy --stack-name ${STAGING_STACK_NAME} \
+            --capabilities CAPABILITY_IAM \
+            --region ${STAGING_REGION} \
+            --s3-bucket ${STAGING_ARTIFACTS_BUCKET} \
+            --no-fail-on-empty-changeset \
+            --role-arn ${STAGING_CLOUDFORMATION_EXECUTION_ROLE}
+
+  build-test-deploy-production:
+    if: github.ref == 'refs/heads/{{ cookiecutter.production_git_branch }}' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    # Configure GitHub Action Environment to have a manual approval step before deployment to production
+    # https://docs.github.com/en/actions/reference/environments
+    # environment: <configured-environment>
+    steps:
+      - uses: actions/checkout@v3
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Assume the production pipeline user role
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: {{ '${{ env.PRODUCTION_REGION }}' }}
+          role-to-assume: {{ '${{ env.PRODUCTION_PIPELINE_EXECUTION_ROLE }}' }}
+          role-session-name: production-deployment
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: Build main branch
+        shell: bash
+        run: sam build --template ${SAM_TEMPLATE} #--use-container
+      
+      - name: Test main branch
+        shell: bash
+        run: npm install && npm run test
+
+      - name: Deploy main branch to production account
+        run: |
+          sam deploy --stack-name ${PRODUCTION_STACK_NAME} \
+            --capabilities CAPABILITY_IAM \
+            --region ${PRODUCTION_REGION} \
+            --s3-bucket ${PRODUCTION_ARTIFACTS_BUCKET} \
+            --no-fail-on-empty-changeset \
+            --role-arn ${PRODUCTION_CLOUDFORMATION_EXECUTION_ROLE}

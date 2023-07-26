@@ -1,0 +1,254 @@
+{
+    "questions": [
+        {
+            "key": "intro",
+            "question": "\nThis template configures a pipeline that deploys a serverless application to a development, a staging and a production stage.\n",
+            "kind": "info"
+        },
+        {
+            "key": "message_stage_name",
+            "question": "We use the stage configuration name to automatically retrieve the bootstrapped resources created when you ran `sam pipeline bootstrap`.\n",
+            "kind": "info"
+        },
+        {
+            "key": "message_list_stage_names_development",
+            "question": {
+                "keyPath": [
+                    "stage_names_message"
+                ]
+            },
+            "kind": "info"
+        },
+        {
+            "key": "development_stage_name",
+            "question": "Select the index of the development stage.",
+            "isRequired": true
+        },
+        {
+            "key": "development_stack_name",
+            "question": "What is the sam application stack name for the development stage?",
+            "isRequired": true
+        },
+        {
+            "key": "development_pipeline_execution_role",
+            "question": "What is the pipeline execution role ARN for the development stage?",
+            "isRequired": true,
+            "allowAutofill": true,
+            "default": {
+                "keyPath": [
+                    {
+                        "valueOf": "development_stage_name"
+                    },
+                    "pipeline_execution_role"
+                ]
+            }
+        },
+        {
+            "key": "development_cloudformation_execution_role",
+            "question": "What is the CloudFormation execution role ARN for stage 1?",
+            "isRequired": true,
+            "allowAutofill": true,
+            "default": {
+                "keyPath": [
+                    {
+                        "valueOf": "development_stage_name"
+                    },
+                    "cloudformation_execution_role"
+                ]
+            }
+        },
+        {
+            "key": "development_artifacts_bucket",
+            "question": "What is the S3 bucket name for artifacts for stage 1?",
+            "isRequired": true,
+            "allowAutofill": true,
+            "default": {
+                "keyPath": [
+                    {
+                        "valueOf": "development_stage_name"
+                    },
+                    "artifacts_bucket"
+                ]
+            }
+        },
+        {
+            "key": "development_region",
+            "question": "What is the AWS region for stage 1?",
+            "isRequired": true,
+            "allowAutofill": true,
+            "default": {
+                "keyPath": [
+                    {
+                        "valueOf": "development_stage_name"
+                    },
+                    "region"
+                ]
+            }
+        },
+        {
+            "key": "message_development_stage_configured",
+            "question": "Stage 1 configured successfully, configuring stage 2.\n",
+            "kind": "info"
+        },
+        {
+            "key": "message_list_stage_names_staging",
+            "question": {
+                "keyPath": [
+                    "stage_names_message"
+                ]
+            },
+            "kind": "info"
+        },
+        {
+            "key": "staging_stage_name",
+            "question": "Select the index of the staging stage.",
+            "isRequired": true
+        },
+        {
+            "key": "staging_stack_name",
+            "question": "What is the sam application stack name for stage 2?",
+            "isRequired": true
+        },
+        {
+            "key": "staging_pipeline_execution_role",
+            "question": "What is the pipeline execution role ARN for stage 2?",
+            "isRequired": true,
+            "allowAutofill": true,
+            "default": {
+                "keyPath": [
+                    {
+                        "valueOf": "staging_stage_name"
+                    },
+                    "pipeline_execution_role"
+                ]
+            }
+        },
+        {
+            "key": "staging_cloudformation_execution_role",
+            "question": "What is the CloudFormation execution role ARN for stage 2?",
+            "isRequired": true,
+            "allowAutofill": true,
+            "default": {
+                "keyPath": [
+                    {
+                        "valueOf": "staging_stage_name"
+                    },
+                    "cloudformation_execution_role"
+                ]
+            }
+        },
+        {
+            "key": "staging_artifacts_bucket",
+            "question": "What is the S3 bucket name for artifacts for stage 2?",
+            "isRequired": true,
+            "allowAutofill": true,
+            "default": {
+                "keyPath": [
+                    {
+                        "valueOf": "staging_stage_name"
+                    },
+                    "artifacts_bucket"
+                ]
+            }
+        },
+        {
+            "key": "staging_region",
+            "question": "What is the AWS region for stage 2?",
+            "isRequired": true,
+            "allowAutofill": true,
+            "default": {
+                "keyPath": [
+                    {
+                        "valueOf": "staging_stage_name"
+                    },
+                    "region"
+                ]
+            }
+        },
+        {
+            "key": "message_staging_stage_configured",
+            "question": "Stage 2 configured successfully.\n",
+            "kind": "info"
+        },
+        {
+            "key": "message_list_stage_names_production",
+            "question": {
+                "keyPath": [
+                    "stage_names_message"
+                ]
+            },
+            "kind": "info"
+        },
+        {
+            "key": "production_stage_name",
+            "question": "Select the index of the production stage.",
+            "isRequired": true
+        },
+        {
+            "key": "production_stack_name",
+            "question": "What is the sam application stack name for stage 3?",
+            "isRequired": true
+        },
+        {
+            "key": "production_pipeline_execution_role",
+            "question": "What is the pipeline execution role ARN for stage 3?",
+            "isRequired": true,
+            "allowAutofill": true,
+            "default": {
+                "keyPath": [
+                    {
+                        "valueOf": "production_stage_name"
+                    },
+                    "pipeline_execution_role"
+                ]
+            }
+        },
+        {
+            "key": "production_cloudformation_execution_role",
+            "question": "What is the CloudFormation execution role ARN for stage 3?",
+            "isRequired": true,
+            "allowAutofill": true,
+            "default": {
+                "keyPath": [
+                    {
+                        "valueOf": "production_stage_name"
+                    },
+                    "cloudformation_execution_role"
+                ]
+            }
+        },
+        {
+            "key": "production_artifacts_bucket",
+            "question": "What is the S3 bucket name for artifacts for stage 3?",
+            "isRequired": true,
+            "allowAutofill": true,
+            "default": {
+                "keyPath": [
+                    {
+                        "valueOf": "production_stage_name"
+                    },
+                    "artifacts_bucket"
+                ]
+            }
+        },
+        {
+            "key": "production_region",
+            "question": "What is the AWS region for stage 3?",
+            "isRequired": true,
+            "allowAutofill": true,
+            "default": {
+                "keyPath": [
+                    {
+                        "valueOf": "production_stage_name"
+                    },
+                    "region"
+                ]
+            }
+        },
+        {
+            "key": "message_production_stage_configured",
+            "question": "Stage 3 configured successfully.\n",
+            "kind": "info"
+        }
+    ]
+}
